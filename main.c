@@ -1,3 +1,6 @@
+/* EIGHT FREAK */
+/* by Brian Puthuff */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -11,13 +14,11 @@
 #define QD              13
 #define LIMIT           4
 
-
 /* function declaration */
 void getLine(char buffer[]);
 int isValidEntry(struct player* p, char buffer[]);
 void printInformation(struct player* p1, struct player* p2, struct card* c);
 void printCard(struct card* c);
-
 
 int main(int argc, char* argv[])
 {
@@ -82,19 +83,25 @@ int main(int argc, char* argv[])
             {
                 /* if the current player has no valid plays, player must draw */
                 if((valid_plays = getValidPlays(current_player, show_card)) == 0)
+                {
                     addCardToPlayerHand(current_player, drawCardFromDeck(game_deck));
+                    printInformation(user, cpu, show_card);
+                }
             } while(valid_plays == 0);
             
             /* play prompt */
             if(current_player == user)
             {
+                printInformation(user, cpu, show_card);
                 do
                 {
                     /* REPEAT UNTIL PLAYER ENTERS A VALID CARD! */
                     /* NEEDS TO BE WRITTEN */
+                    printf("Enter card to play (eg. 6H): ");
                     getLine(input_buffer);
+                    index = isValidEntry(current_player, input_buffer);
                 }
-                while((index = isValidEntry(current_player, input_buffer)) < 0);                    
+                while(index < 0);                    
             }
             else
             {
@@ -148,14 +155,69 @@ int main(int argc, char* argv[])
 
 void getLine(char buffer[])
 {
-    /* NEEDS TO BE WRITTEN */
-    /*char c;
-    int i;*/
+    int i;
+    char c;
+
+    i = 0;
+    do
+    {
+        c = getchar();
+        if(c != '\n')
+            buffer[i] = c;
+        ++i;
+    } while((c != '\n') && (i < LIMIT - 1));
+    buffer[LIMIT - 1] = '\0'; /* just sayin' */
 }
 
 int isValidEntry(struct player* p, char buffer[])
 {
-    /* NEEDS TO BE WRITTEN */
+    int value, i;
+    char suit;
+    
+    /* value evaluation */
+    if(buffer[0] == '1')
+    {
+        if(buffer[1] == '0')
+                value = 10;
+    }
+    else if((buffer[0] == 'J') || (buffer[0] == 'j'))
+        value = 11;
+    else if((buffer[0] == 'Q') || (buffer[0] == 'q'))
+        value = 12;
+    else if((buffer[0] == 'K') || (buffer[0] == 'k'))
+        value = 13;
+    else if((buffer[0] == 'A') || (buffer[0] == 'a'))
+        value = 1;
+    else if((buffer[0] >= '2') && (buffer[0] <= '9'))
+        value = buffer[0] - '0';   
+    else
+        return -1; /* failed on value entry */
+
+    if(value == 10)
+        i = 2;
+    else
+        i = 1;
+        
+    if(buffer[i] == 'H' || buffer[i] == 'h')
+        suit = 'H';
+    else if(buffer[i] == 'S' || buffer[i] == 's')
+        suit = 'S';
+    else if(buffer[i] == 'D' || buffer[i] == 'd')
+        suit = 'D';
+    else if(buffer[i] == 'C' || buffer[i] == 'c')
+        suit = 'C';
+    else
+        return -1;
+
+    for(i = 0; i < p->hand_size; ++i)
+    {
+        if((p->hand[i]->value == value) && (p->hand[i]->suit == suit))
+        {
+            printf("value is a match! (%d)\n", i);
+            return i;
+        }
+    }
+
     return -1;
 }
 
