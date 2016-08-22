@@ -17,8 +17,11 @@
 /* function declaration */
 void getLine(char buffer[]);
 int isValidEntry(struct player* p, char buffer[]);
-void printInformation(struct player* p1, struct player* p2, struct card* c);
+void printInformation(struct player* p1, struct player* p2, struct card* c, char wild_card_suit);
+void printShowCard(struct card* c, char wild_card_suit);
+void printHand(struct player* p);
 void printCard(struct card* c);
+char getWildCardSuit(void);
 
 int main(int argc, char* argv[])
 {
@@ -35,7 +38,7 @@ int main(int argc, char* argv[])
     int is_playing, in_session;
     int index, valid_plays, i;
     char input_buffer[5];
-    char c;
+    char c, wild_card_suit;
 
     /* create user and cpu players */
     user = createPlayer(0);
@@ -72,9 +75,10 @@ int main(int argc, char* argv[])
 
         /* show card is card to play from */
         show_card = drawCardFromDeck(game_deck);
-
+        wild_card_suit = show_card->suit;
+        
         /* display game information */
-        printInformation(user, cpu, show_card);
+        printInformation(user, cpu, show_card, wild_card_suit);
 
         /* turn loop */
         while(in_session)
@@ -82,17 +86,21 @@ int main(int argc, char* argv[])
             do
             {
                 /* if the current player has no valid plays, player must draw */
-                if((valid_plays = getValidPlays(current_player, show_card)) == 0)
+                if((valid_plays = getValidPlays(current_player, show_card, wild_card_suit)) == 0)
                 {
+                    printf("Player hand (%d cards, %d valid play(s)).\n", current_player->hand_size, valid_plays);
+                    printf("Press enter to draw a card.\n");
+                    c = getchar();
                     addCardToPlayerHand(current_player, drawCardFromDeck(game_deck));
-                    printInformation(user, cpu, show_card);
+                    printf("Updated hand (%d cards, %d valid play(s)).\n", current_player->hand_size, getValidPlays(current_player, show_card, wild_card_suit));
+                    printHand(current_player);
                 }
             } while(valid_plays == 0);
             
             /* play prompt */
             if(current_player == user)
             {
-                printInformation(user, cpu, show_card);
+                printInformation(user, cpu, show_card, wild_card_suit);
                 do
                 {
                     /* REPEAT UNTIL PLAYER ENTERS A VALID CARD! */
@@ -112,10 +120,17 @@ int main(int argc, char* argv[])
 
             /* once a card index is selected, we need to make that the new show card */
             returnCardToDeck(game_deck, show_card); /* return old show card to deck */
-            show_card = playCard(current_player, 0); /* played card becomes new show_card */
-
+            show_card = playCard(current_player, index); /* played card becomes new show_card */
+            
+            if(current_player == user)
+            {            
+                if(show_card->value == 8)
+                    wild_card_suit = getWildCardSuit();
+                else
+                    wild_card_suit = show_card->suit;
+            }
             /* check for no more cards in current player's hand */
-            if(current_player->hand_size == 0)
+            if((current_player->hand_size) == 0)
             {
                 in_session = 0; /* this game is over */
 
@@ -221,44 +236,55 @@ int isValidEntry(struct player* p, char buffer[])
     return -1;
 }
 
-void printInformation(struct player* p1, struct player* p2, struct card* c)
+void printInformation(struct player* p1, struct player* p2, struct card* c, char wild_card_suit)
 {
-    int i;
-
+    /*
     printf("WINNING SCORE: %d\n", WINNING_SCORE);
     printf("PLAYER: %6d\n", p1->score);
     printf("CPU: %6d\n\n", p2->score);
     printf("SHOW CARD: ");
+    */
 
     /* display show card */
+    printShowCard(c, wild_card_suit);
 
-    printCard(c);
+    /* print cpu's hand --- DEBUG ONLY
+    printf("CPU's Hand:\n");
+    printHand(p2);
+    printf("CPU's Valid Plays: %d\n", getValidPlays(p2, c));
+    */
+    printf("Player's Hand (%d cards, %d valid plays):\n", p1->hand_size, getValidPlays(p1, c, wild_card_suit));
+    printHand(p1);
     printf("\n");
 
-    /* print cpu's hand --- DEBUG ONLY*/
-    printf("CPU's Hand:\n");
-    for(i = 0; i < p2->hand_size; ++i)
-    {
-        printCard(p2->hand[i]);
-        if(i < p2->hand_size - 1)
-            printf(" ");
-        else
-            printf("\n");
-    }
-    printf("CPU's Valid Plays: %d\n", getValidPlays(p2, c));
+}
+
+/*print show card */
+void printShowCard(struct card* c, char wild_card_suit)
+{
+    printf("PLAY >>> ");
+    printCard(c);
+    printf(" <<<");
+    if(wild_card_suit != c->suit)
+        printf(" --- SPECIAL SUIT: %c\n", wild_card_suit);
+    else
+        printf("\n");
+}
+
+/*print player's hand */
+void printHand(struct player* p)
+{
+    int i;
 
     /* print players hand*/
-    printf("Player's Hand:\n");
-    for(i = 0; i < p1->hand_size; ++i)
+    for(i = 0; i < p->hand_size; ++i)
     {
-        printCard(p1->hand[i]);
-        if(i < p1->hand_size - 1)
+        printCard(p->hand[i]);
+        if(i < p->hand_size - 1)
             printf(" ");
         else
             printf("\n");
     }
-    printf("Player's Valid Plays: %d\n", getValidPlays(p1, c));
-
 }
 
 /* print a card's value based on its structure data */
@@ -286,4 +312,18 @@ void printCard(struct card* c)
             break;
     }
     printf("%c", c->suit);
+}
+
+char getWildCardSuit()
+{
+    char c;
+    do
+    {
+        printf("Enter wildcard suit (H, S, D, or C): ");
+        c = getchar();
+        getchar(); /* enter */
+    }
+    while((c != 'H' && c != 'h') && (c != 'S' && c != 's') && (c != 'D' && c != 'd') && (c != 'C' && c != 'c'));
+
+    return c;
 }

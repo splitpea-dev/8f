@@ -61,16 +61,37 @@ int pickBestPlay(struct player* p)
     return 0;
 }
 
-int getValidPlays(struct player* p, struct card* c)
+int getValidPlays(struct player* p, struct card* c, char wild_card_suit)
 {
     int i;
     int plays;
 
     plays = 0;
-    for(i = 0; i < p->hand_size; ++i)
+    if(wild_card_suit == c->suit)
     {
-        if((p->hand[i]->value == c->value) || (p->hand[i]->suit == c->suit) || (p->hand[i]->value == 8))
-            plays++;
+        for(i = 0; i < p->hand_size; ++i)
+        {
+            if((p->hand[i]->value == c->value) || (p->hand[i]->suit == c->suit) || (p->hand[i]->value == 8))
+                plays++;
+        }
+    }
+    else
+    {
+        for(i = 0; i < p->hand_size; ++i)
+        {
+            if((p->hand[i]->suit == wild_card_suit) || (p->hand[i]->value == 8))
+                plays++;
+        }
     }
     return plays;
+}
+
+int hasWildCard(struct player* p)
+{
+	int i;
+	for(i = 0; i < p->hand_size; ++i)
+		if(p->hand[i]->value == 8)
+			return i;
+
+	return -1;
 }
