@@ -28,5 +28,7 @@ struct card* playCard(struct player* p, int index);
 int pickBestPlay(struct player* p);
 int getValidPlays(struct player* p, struct card* c, char wild_card_suit);
 int hasWildCard(struct player* p);
+struct card* AIPlayCard(struct player*p, struct card* c, char* wild_suit_mod);
+void copyLeft(struct player* p, int index);
 
 #endif

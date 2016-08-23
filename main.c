@@ -88,47 +88,51 @@ int main(int argc, char* argv[])
                 /* if the current player has no valid plays, player must draw */
                 if((valid_plays = getValidPlays(current_player, show_card, wild_card_suit)) == 0)
                 {
-                    printf("Player hand (%d cards, %d valid play(s)).\n", current_player->hand_size, valid_plays);
-                    printf("Press enter to draw a card.\n");
+                    if(current_player == cpu)
+                        printf("CPU");
+                    else
+                        printf("Player");
+                    printf(" hand has no valid plays!\n");
+                    if(current_player == cpu)
+                        printf("CPU must draw a card, press ENTER to continue.");
+                    else
+                        printf("Press enter to draw a card.\n");
                     c = getchar();
                     addCardToPlayerHand(current_player, drawCardFromDeck(game_deck));
-                    printf("Updated hand (%d cards, %d valid play(s)).\n", current_player->hand_size, getValidPlays(current_player, show_card, wild_card_suit));
                     printHand(current_player);
                 }
             } while(valid_plays == 0);
-            
+
+
+            printInformation(user, cpu, show_card, wild_card_suit);
+            returnCardToDeck(game_deck, show_card); /* return old show card to deck */
             /* play prompt */
             if(current_player == user)
             {
-                printInformation(user, cpu, show_card, wild_card_suit);
                 do
                 {
                     /* REPEAT UNTIL PLAYER ENTERS A VALID CARD! */
-                    /* NEEDS TO BE WRITTEN */
                     printf("Enter card to play (eg. 6H): ");
                     getLine(input_buffer);
                     index = isValidEntry(current_player, input_buffer);
                 }
-                while(index < 0);                    
+                while(index < 0);
+                /* once a card index is selected, we need to make that the new show card */
+
+                show_card = playCard(current_player, index); /* played card becomes new show_card */
+                if(show_card->value == 8)
+                    wild_card_suit = getWildCardSuit();
+                else
+                    wild_card_suit = show_card->suit;            
             }
             else
             {
                 /* CPU use limited AI to select best play */
                 /* NEEDS TO BE WRITTEN */
-                index = pickBestPlay(current_player);
+                printf("AI check.\n");
+                show_card = AIPlayCard(current_player, show_card, &wild_card_suit);
             }
-
-            /* once a card index is selected, we need to make that the new show card */
-            returnCardToDeck(game_deck, show_card); /* return old show card to deck */
-            show_card = playCard(current_player, index); /* played card becomes new show_card */
             
-            if(current_player == user)
-            {            
-                if(show_card->value == 8)
-                    wild_card_suit = getWildCardSuit();
-                else
-                    wild_card_suit = show_card->suit;
-            }
             /* check for no more cards in current player's hand */
             if((current_player->hand_size) == 0)
             {
@@ -146,14 +150,14 @@ int main(int argc, char* argv[])
                     if(c == 'N' || c =='n')
                         is_playing = 0;
                 }
+            }
+            else
+            {
+                /* switch player for next turn*/
+                if(current_player == cpu)
+                    current_player = user;
                 else
-                {
-                    /* switch player for next turn*/
-                    if(current_player->id == 0)
-                        current_player = user;
-                    else
-                        current_player = cpu;
-                }
+                    current_player = cpu;
             }
 
         }
@@ -248,12 +252,11 @@ void printInformation(struct player* p1, struct player* p2, struct card* c, char
     /* display show card */
     printShowCard(c, wild_card_suit);
 
-    /* print cpu's hand --- DEBUG ONLY
-    printf("CPU's Hand:\n");
+    /* print cpu's hand --- DEBUG ONLY */
+    printf("CPU's hand has %d cards:\n", p2->hand_size);
     printHand(p2);
-    printf("CPU's Valid Plays: %d\n", getValidPlays(p2, c));
-    */
-    printf("Player's Hand (%d cards, %d valid plays):\n", p1->hand_size, getValidPlays(p1, c, wild_card_suit));
+    
+    printf("Player's hand has %d cards (%d valid plays):\n", p1->hand_size, getValidPlays(p1, c, wild_card_suit));
     printHand(p1);
     printf("\n");
 
@@ -264,7 +267,6 @@ void printShowCard(struct card* c, char wild_card_suit)
 {
     printf("PLAY >>> ");
     printCard(c);
-    printf(" <<<");
     if(wild_card_suit != c->suit)
         printf(" --- SPECIAL SUIT: %c\n", wild_card_suit);
     else
@@ -279,7 +281,10 @@ void printHand(struct player* p)
     /* print players hand*/
     for(i = 0; i < p->hand_size; ++i)
     {
-        printCard(p->hand[i]);
+        if(p->id == 0)
+            printCard(p->hand[i]);
+        else
+            printf("###");
         if(i < p->hand_size - 1)
             printf(" ");
         else
@@ -293,22 +298,22 @@ void printCard(struct card* c)
     switch(c->value)
     {
         case 1:
-            printf("A");
+            printf(" A");
             break;
         case 10:
             printf("10");
             break;
         case 11:
-            printf("J");
+            printf(" J");
             break;
         case 12:
-            printf("Q");
+            printf(" Q");
             break;
         case 13:
-            printf("K");
+            printf(" K");
             break;
         default:
-            printf("%c", c->value + '0');
+            printf(" %c", c->value + '0');
             break;
     }
     printf("%c", c->suit);

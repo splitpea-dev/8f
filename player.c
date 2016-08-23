@@ -41,16 +41,13 @@ void addCardToPlayerHand(struct player* p, struct card* c)
 
 struct card* playCard(struct player* p, int index)
 {
-    int i;
     struct card* c;
 
     /* return value */
     c = p->hand[index];
 
     /* copy left */
-    for(i = index; i < p->hand_size; ++i)
-        p->hand[i] = p->hand[i+1];
-    p->hand_size--;
+    copyLeft(p, index);
 
     return c;
 }
@@ -94,4 +91,83 @@ int hasWildCard(struct player* p)
 			return i;
 
 	return -1;
+}
+
+struct card* AIPlayCard(struct player*p, struct card* c, char* wild_suit_mod)
+{
+	int index;
+	int max, h_sum, s_sum, d_sum, c_sum, i;
+	char s;
+    struct card* out;
+
+	index = hasWildCard(p);
+	if(index > -1)
+	{
+		/* we will play the 8 but we need to choose a suit */
+		max = h_sum = s_sum = d_sum = c_sum = 0;
+		for(i = 0; i < p->hand_size; ++i)
+		{		
+			if((p->hand[i]->suit == 'H') && (p->hand[i]->value !=8))
+				h_sum += p->hand[i]->points;
+			if((p->hand[i]->suit == 'S') && (p->hand[i]->value !=8))
+				s_sum += p->hand[i]->points;
+			if((p->hand[i]->suit == 'D') && (p->hand[i]->value !=8))
+				d_sum += p->hand[i]->points;
+			if((p->hand[i]->suit == 'C') && (p->hand[i]->value !=8))
+				c_sum += p->hand[i]->points;
+		}
+
+        /* suit with highest point total */ 
+		max = h_sum;
+		s = 'H';
+		if(s_sum > max)
+		{
+			max = s_sum;
+			s ='S';
+		}
+		if(d_sum > max)
+		{
+			max = d_sum;
+			s ='D';
+		}
+		if(c_sum > max)
+		{
+			max = c_sum;
+			s ='C';
+		}
+		*wild_suit_mod = s;
+		out = p->hand[index];
+        copyLeft(p, index);
+	}
+    else
+    {
+	    /* if no 8 (aka wild card), play best card */
+
+	    for(i = 0; i < p->hand_size; ++i)
+        {
+		    if(p->hand[i]->suit == c->suit)
+            {
+			    if(p->hand[i]->points > max)
+		    	{
+				    max = p->hand[i]->points;
+				    index = i;
+			    }
+            }
+        }
+	    *wild_suit_mod = p->hand[index]->suit;
+	    out = p->hand[index];
+        copyLeft(p, index);
+    }
+
+    return out;
+}
+
+void copyLeft(struct player* p, int index)
+{
+    int i;
+
+    /* copy left */
+    for(i = index; i < p->hand_size; ++i)
+        p->hand[i] = p->hand[i+1];
+    p->hand_size--;
 }
