@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
     int is_playing, in_session;
     int index, valid_plays, i;
     char input_buffer[5];
-    char c, wild_card_suit;
+    char c, play_card_suit;
 
     /* create user and cpu players */
     user = createPlayer(0);
@@ -75,18 +75,19 @@ int main(int argc, char* argv[])
 
         /* show card is card to play from */
         show_card = drawCardFromDeck(game_deck);
-        wild_card_suit = show_card->suit;
+        play_card_suit = show_card->suit;
         
         /* display game information */
-        printInformation(user, cpu, show_card, wild_card_suit);
+        printInformation(user, cpu, show_card, play_card_suit);
 
         /* turn loop */
         while(in_session)
         {
+            /* does player have a valid move */
             do
             {
                 /* if the current player has no valid plays, player must draw */
-                if((valid_plays = getValidPlays(current_player, show_card, wild_card_suit)) == 0)
+                if((valid_plays = getValidPlays(current_player, show_card, play_card_suit)) == 0)
                 {
                     if(current_player == cpu)
                         printf("CPU");
@@ -97,14 +98,14 @@ int main(int argc, char* argv[])
                         printf("CPU must draw a card, press ENTER to continue.");
                     else
                         printf("Press enter to draw a card.\n");
-                    c = getchar();
+                    getchar();
                     addCardToPlayerHand(current_player, drawCardFromDeck(game_deck));
                     printHand(current_player);
                 }
             } while(valid_plays == 0);
 
 
-            printInformation(user, cpu, show_card, wild_card_suit);
+            printInformation(user, cpu, show_card, play_card_suit);
             returnCardToDeck(game_deck, show_card); /* return old show card to deck */
             /* play prompt */
             if(current_player == user)
@@ -121,26 +122,30 @@ int main(int argc, char* argv[])
 
                 show_card = playCard(current_player, index); /* played card becomes new show_card */
                 if(show_card->value == 8)
-                    wild_card_suit = getWildCardSuit();
+                    play_card_suit = getWildCardSuit();
                 else
-                    wild_card_suit = show_card->suit;            
+                    play_card_suit = show_card->suit;            
             }
             else
             {
                 /* CPU use limited AI to select best play */
                 /* NEEDS TO BE WRITTEN */
                 printf("AI check.\n");
-                show_card = AIPlayCard(current_player, show_card, &wild_card_suit);
+                show_card = AIPlayCard(current_player, show_card, &play_card_suit);
             }
             
             /* check for no more cards in current player's hand */
             if((current_player->hand_size) == 0)
             {
                 in_session = 0; /* this game is over */
-
-                /* announce winner --- NEEDS TO BE WRITTEN */
+                printf("The game has ended.");
+                if(current_player == cpu)
+                    printf("CPU wins with %d points.\n", user->score);
+                else
+                    printf("Player wins with %d points.\n", cpu->score);
                 /* if player's score is WINNING SCORE, game over */
-
+                is_playing = 0;
+                
                 if(current_player->score >= WINNING_SCORE)
                 {
                     /* NEEDS TO BE WRITTEN */
@@ -281,10 +286,11 @@ void printHand(struct player* p)
     /* print players hand*/
     for(i = 0; i < p->hand_size; ++i)
     {
-        if(p->id == 0)
+        /*
+        if(p->id == 0)*/
             printCard(p->hand[i]);
-        else
-            printf("###");
+        /* else
+            printf("###");*/
         if(i < p->hand_size - 1)
             printf(" ");
         else

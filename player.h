@@ -26,9 +26,9 @@ void resetPlayerScore(struct player* p);
 void addCardToPlayerHand(struct player* p, struct card* c);
 struct card* playCard(struct player* p, int index);
 int pickBestPlay(struct player* p);
-int getValidPlays(struct player* p, struct card* c, char wild_card_suit);
+int getValidPlays(struct player* p, struct card* c, char play_card_suit);
 int hasWildCard(struct player* p);
-struct card* AIPlayCard(struct player*p, struct card* c, char* wild_suit_mod);
+struct card* AIPlayCard(struct player*p, struct card* c, char* play_card_suit);
 void copyLeft(struct player* p, int index);
-
+void updateScore(struct player* p);
 #endif
