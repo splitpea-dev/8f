@@ -106,7 +106,7 @@ int main(int argc, char* argv[])
 
 
             printInformation(user, cpu, show_card, play_card_suit);
-            returnCardToDeck(game_deck, show_card); /* return old show card to deck */
+
             /* play prompt */
             if(current_player == user)
             {
@@ -133,16 +133,16 @@ int main(int argc, char* argv[])
                 printf("AI check.\n");
                 show_card = AIPlayCard(current_player, show_card, &play_card_suit);
             }
-            
+            returnCardToDeck(game_deck, show_card); /* return old show card to deck */
             /* check for no more cards in current player's hand */
             if((current_player->hand_size) == 0)
             {
                 in_session = 0; /* this game is over */
                 printf("The game has ended.");
                 if(current_player == cpu)
-                    printf("CPU wins with %d points.\n", user->score);
+                    printf("CPU wins with %d points.\n", getPlayerScore(user));
                 else
-                    printf("Player wins with %d points.\n", cpu->score);
+                    printf("Player wins with %d points.\n", getPlayerScore(cpu));
                 /* if player's score is WINNING SCORE, game over */
                 is_playing = 0;
                 

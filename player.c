@@ -22,7 +22,6 @@ void resetPlayer(struct player* p)
 {
     p->hand_size = 0;
     p->hand_index = 0;
-    p->point_sum = 0;
 }
 
 /* reset score */
@@ -36,7 +35,6 @@ void addCardToPlayerHand(struct player* p, struct card* c)
     p->hand[p->hand_size] = c;
     p->hand_index++;
     p->hand_size++;
-    p->point_sum+= c->points;
 }
 
 struct card* playCard(struct player* p, int index)
@@ -48,8 +46,6 @@ struct card* playCard(struct player* p, int index)
 
     /* copy left */
     copyLeft(p, index);
-
-    updateScore(p);
     return c;
 }
 
@@ -134,11 +130,12 @@ struct card* AIPlayCard(struct player*p, struct card* c, char* play_card_suit)
 	}
     else
     {
+        max = 0;
         printf("CPU has no wild card to play!]\n");
 	    /* if no 8 (aka wild card), play best card */
 	    for(i = 0; i < p->hand_size; ++i)
         {
-		    if(p->hand[i]->suit == *play_card_suit)
+		    if(p->hand[i]->suit == (*play_card_suit))
             {
 			    if(p->hand[i]->points > max)
 		    	{
@@ -167,7 +164,6 @@ struct card* AIPlayCard(struct player*p, struct card* c, char* play_card_suit)
         copyLeft(p, index);
     }
 
-    updateScore(p);
     return out;
 }
 
@@ -181,12 +177,13 @@ void copyLeft(struct player* p, int index)
     p->hand_size--;
 }
 
-void updateScore(struct player* p)
+int getPlayerScore(struct player* p)
 {
-    int i, s;
-    s = 0;
+    int i, score;
+
+    score = 0;
     for(i = 0; i < p->hand_size; ++i)
-        s += p->hand[i]->points;
+        score+= p->hand[i]->points;
     
-    p->score = s;
+    return score;
 }

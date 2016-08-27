@@ -3,49 +3,51 @@
 /* create deck */
 struct deck* createDeck(void)
 {
-    int i;
+    int i, s;
     struct deck* d;
-    
+
     /* create deck object on heap */
     d = (struct deck*) malloc(sizeof(struct deck));
+    d->play_deck_size = DECK_SIZE;
+    d->shuffle_counter = DECK_SIZE;
 
-    /* create 52 card objects pointed to by deck model */
+    /* create 52 cards on the heap */
     for(i = 0; i < DECK_SIZE; ++i)
-        d->deck_model[i] = (struct card*) malloc(sizeof(struct card));
-    
-    for(i = 0; i < QD; ++i)
+        d->master_deck[i] = (struct card*) malloc(sizeof(struct card));
+
+    /* populate cards with data */
+    s = 0;
+    for(i = 0; i < DECK_SIZE; ++i)
     {
-        /* hearts */
-        d->deck_model[i]->value = d->deck_model[i]->points = i + 1;
-        d->deck_model[i]->suit = 'H';
+        /* suit based on mod 13 */
+        if((i > 0) && (i % 13 == 0))
+            ++s;
 
-        /* spades */
-        d->deck_model[i + QD]->value = d->deck_model[i + QD]->points = i + 1;
-        d->deck_model[i + QD]->suit = 'S';
+        /* value 1 - 13 */
+        d->master_deck[i]->value = (i % 13) + 1;
 
-        /* diamonds */
-        d->deck_model[i + (QD * 2)]->value = d->deck_model[i + (QD * 2)]->points = i + 1;
-        d->deck_model[i + (QD * 2)]->suit = 'D';
+        /* suit H, S, D, and C */
+        if(s == 0)
+            d->master_deck[i]->suit = 'H';
+        else if(s == 1)
+            d->master_deck[i]->suit = 'S';
+        else if(s == 2)
+            d->master_deck[i]->suit = 'D'; 
+        else
+            d->master_deck[i]->suit = 'C';
 
-        /* clubs */
-        d->deck_model[i + (QD * 3)]->value = d->deck_model[i + (QD * 3)]->points = i + 1;
-        d->deck_model[i + (QD * 3)]->suit = 'C';
+        /* points */
+        if(d->master_deck[i]->value == 8)
+            d->master_deck[i]->points = 50;
+        else if(d->master_deck[i]->value > 9)
+            d->master_deck[i]->points = 10;
+        else
+            d->master_deck[i]->points = d->master_deck[i]->value;
     }
 
-    /* correct point values for court cards and eights */
-    for(i = 10; i < QD; ++i)
-    {
-        d->deck_model[i]->points =
-            d->deck_model[i + QD]->points =
-            d->deck_model[i + (QD * 2)]->points =
-            d->deck_model[i + (QD * 3)]->points = 10;
-    }
-    d->deck_model[7]->points =
-            d->deck_model[7 + QD]->points =
-            d->deck_model[7 + (QD * 2)]->points =
-            d->deck_model[7 + (QD * 3)]->points = 50;
+    /* NOTE: The master deck is designed to hold all the
+       card addresses for easy deletion when deck is destroyed. */
 
-    /* finally copy model deck pointers to game deck and initialize markers */
     resetDeck(d);
 
     return d;
@@ -61,8 +63,8 @@ void destroyDeck(struct deck* d)
         /* free all card objects memory on heap */
         for(i = 0; i < DECK_SIZE; ++i)
         {
-            if(d->deck_model[i] != NULL)
-                free(d->deck_model[i]);
+            if(d->master_deck[i] != NULL)
+                free(d->master_deck[i]);
         }
 
         /* free deck object from heap */
@@ -75,24 +77,22 @@ void resetDeck(struct deck* d)
     int i;
 
     for(i = 0; i < DECK_SIZE; ++i)
-        d->current_deck[i] = d->deck_model[i];
-    d->fp = d->bf = 0;
-    d->bp = DECK_SIZE - 1;
+        d->play_deck[i] = d->master_deck[i];
+    d->play_deck_size = DECK_SIZE;
+    d->shuffle_counter = DECK_SIZE;
 }
 
 void shuffleDeck(struct deck* d)
 {
     int r, i;
-    int range;
     struct card* temp_card;
 
-    range = ((d->bp + 1) - d->fp);
-    for(i = d->fp; i < d->bp+1; ++i)
+    for(i = 0; i < d->play_deck_size; ++i)
     {
-        r = ((int) (rand() % range)) + d->fp;
-        temp_card = d->current_deck[i];
-        d->current_deck[i] = d->current_deck[r];
-        d->current_deck[r] = temp_card;
+        r = (int) (rand() % d->play_deck_size);
+        temp_card = d->play_deck[i];
+        d->play_deck[i] = d->play_deck[r];
+        d->play_deck[r] = temp_card;
     }
 
     /* shuffle card item positions between front marker and back marker */
@@ -100,22 +100,37 @@ void shuffleDeck(struct deck* d)
 
 struct card* drawCardFromDeck(struct deck* d)
 {
-    struct card* c = d->current_deck[d->fp];
+    int i;
+    struct card* c = d->play_deck[0];
 
-    d->fp++;
-    if(d->fp > d->bp)
+    /* card pulled from front, shift everything forward */
+    for(i = 0; i < d->play_deck_size; ++i)
+        d->play_deck[i] = d->play_deck[i + 1];
+    d->play_deck_size--;
+    d->shuffle_counter--;
+    if(d->shuffle_counter == 0)
     {
-        d->fp = 0;
-        d->bp = d->bf - 1;
-        d->bf = 0;
+        printf("shuffling deck...");
         shuffleDeck(d);
+        printf("done.\n");
+        d->shuffle_counter = d->play_deck_size;
     }
-    
     return c;
 }
 
 void returnCardToDeck(struct deck* d, struct card* c)
 {
-    d->current_deck[d->bf] = c;
-    d->bf++;
+    d->play_deck[d->play_deck_size] = c;
+    d->play_deck_size++;
+}
+
+void printDeck(struct deck* d)
+{
+    int i;
+
+    for(i = 0; i < d->play_deck_size; ++i)
+        printf("%3d%c", d->play_deck[i]->value, d->play_deck[i]->suit);
+    
+    printf("\ndeck-size:%3d   shuffle-count:%3d\n", d->play_deck_size, d->shuffle_counter);
+
 }

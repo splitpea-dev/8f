@@ -10,11 +10,16 @@
 #define QD              13
 
 /* deck data structure */
+
+
+
+
 struct deck
 {
-    struct card* deck_model[DECK_SIZE];
-    struct card* current_deck[DECK_SIZE];
-    int fp, bp, bf; 
+    struct card* master_deck[DECK_SIZE];
+    struct card* play_deck[DECK_SIZE];
+    int play_deck_size;
+    int shuffle_counter;
 };
 
 /* deck function declarations */
@@ -24,5 +29,6 @@ void resetDeck(struct deck* d);
 void shuffleDeck(struct deck* d);
 struct card* drawCardFromDeck(struct deck* d);
 void returnCardToDeck(struct deck* d, struct card* c);
+void printDeck(struct deck* d);
 
 #endif

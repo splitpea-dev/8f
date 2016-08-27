@@ -14,7 +14,6 @@ struct player
     struct card* hand[DECK_SIZE];
     int hand_size;
     int hand_index;
-    int point_sum;
     int score;
 };
 
@@ -30,5 +29,5 @@ int getValidPlays(struct player* p, struct card* c, char play_card_suit);
 int hasWildCard(struct player* p);
 struct card* AIPlayCard(struct player*p, struct card* c, char* play_card_suit);
 void copyLeft(struct player* p, int index);
-void updateScore(struct player* p);
+int getPlayerScore(struct player* p);
 #endif
