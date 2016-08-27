@@ -48,8 +48,6 @@ struct deck* createDeck(void)
     /* NOTE: The master deck is designed to hold all the
        card addresses for easy deletion when deck is destroyed. */
 
-    resetDeck(d);
-
     return d;
 }
 

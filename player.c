@@ -177,13 +177,13 @@ void copyLeft(struct player* p, int index)
     p->hand_size--;
 }
 
-int getPlayerScore(struct player* p)
+int getPlayerHandSum(struct player* p)
 {
-    int i, score;
+    int i, sum;
 
-    score = 0;
+    sum = 0;
     for(i = 0; i < p->hand_size; ++i)
-        score+= p->hand[i]->points;
+        sum+= p->hand[i]->points;
     
-    return score;
+    return sum;
 }

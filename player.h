@@ -29,5 +29,5 @@ int getValidPlays(struct player* p, struct card* c, char play_card_suit);
 int hasWildCard(struct player* p);
 struct card* AIPlayCard(struct player*p, struct card* c, char* play_card_suit);
 void copyLeft(struct player* p, int index);
-int getPlayerScore(struct player* p);
+int getPlayerHandSum(struct player* p);
 #endif

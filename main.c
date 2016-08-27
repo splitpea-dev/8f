@@ -17,7 +17,7 @@
 /* function declaration */
 void getLine(char buffer[]);
 int isValidEntry(struct player* p, char buffer[]);
-void printInformation(struct player* p1, struct player* p2, struct card* c, char wild_card_suit);
+void printInformation(struct player* user, struct player* cpu, struct card* show_card, char play_card_suit);
 void printShowCard(struct card* c, char wild_card_suit);
 void printHand(struct player* p);
 void printCard(struct card* c);
@@ -36,7 +36,7 @@ int main(int argc, char* argv[])
 
     /* main variables */
     int is_playing, in_session;
-    int index, valid_plays, i;
+    int index, valid_plays, i, score;
     char input_buffer[5];
     char c, play_card_suit;
 
@@ -57,8 +57,8 @@ int main(int argc, char* argv[])
     /* program loop */
     while(is_playing)
     {
-        /* initialize new game */
-        current_player = user;
+        /* reset game */
+        /* reset players */
         resetPlayer(user);
         resetPlayer(cpu);
 
@@ -73,16 +73,19 @@ int main(int argc, char* argv[])
             addCardToPlayerHand(cpu, drawCardFromDeck(game_deck));
         }
 
-        /* show card is card to play from */
+        /* get current play card */
         show_card = drawCardFromDeck(game_deck);
+
+        /* and finally */
+        current_player = user;
         play_card_suit = show_card->suit;
         
-        /* display game information */
-        printInformation(user, cpu, show_card, play_card_suit);
-
         /* turn loop */
         while(in_session)
         {
+            /* display game information */
+            printInformation(user, cpu, show_card, play_card_suit);
+
             /* does player have a valid move */
             do
             {
@@ -103,9 +106,6 @@ int main(int argc, char* argv[])
                     printHand(current_player);
                 }
             } while(valid_plays == 0);
-
-
-            printInformation(user, cpu, show_card, play_card_suit);
 
             /* play prompt */
             if(current_player == user)
@@ -139,13 +139,21 @@ int main(int argc, char* argv[])
             {
                 in_session = 0; /* this game is over */
                 printf("The game has ended.");
+                
                 if(current_player == cpu)
-                    printf("CPU wins with %d points.\n", getPlayerScore(user));
+                {
+                    score = getPlayerHandSum(user);
+                    printf("CPU wins with %d points.\n", score);
+                }
                 else
-                    printf("Player wins with %d points.\n", getPlayerScore(cpu));
+                {
+                    score = getPlayerHandSum(cpu);
+                    printf("Player wins with %d points.\n", score);
+                }
                 /* if player's score is WINNING SCORE, game over */
                 is_playing = 0;
                 
+                current_player->score+=score;
                 if(current_player->score >= WINNING_SCORE)
                 {
                     /* NEEDS TO BE WRITTEN */
@@ -154,6 +162,34 @@ int main(int argc, char* argv[])
                     c = getchar();
                     if(c == 'N' || c =='n')
                         is_playing = 0;
+                }
+                else
+                {
+                    /* reset game */
+                    /* reset players */
+                    resetPlayer(user);
+                    resetPlayer(cpu);
+
+                    /* setup deck */
+                    resetDeck(game_deck);
+                    shuffleDeck(game_deck);
+                    printDeck(game_deck);
+
+                    /* deal each player 8 cards */
+                    for(i = 0; i < 8; ++i)
+                    {
+                        addCardToPlayerHand(user, drawCardFromDeck(game_deck));
+                        addCardToPlayerHand(cpu, drawCardFromDeck(game_deck));
+                    }
+
+        /* get current play card */
+        show_card = drawCardFromDeck(game_deck);
+
+        /* and finally */
+        current_player = user;
+        play_card_suit = show_card->suit;
+                    is_playing = 1; /* overall game running bool */
+                    in_session = 1; /* current game loop bool */
                 }
             }
             else
@@ -179,10 +215,15 @@ int main(int argc, char* argv[])
 
 void getLine(char buffer[])
 {
+    /*
     int i;
     char c;
 
     i = 0;
+    */
+
+    fgets(buffer, 5, stdin);
+    /*
     do
     {
         c = getchar();
@@ -190,7 +231,8 @@ void getLine(char buffer[])
             buffer[i] = c;
         ++i;
     } while((c != '\n') && (i < LIMIT - 1));
-    buffer[LIMIT - 1] = '\0'; /* just sayin' */
+    buffer[LIMIT - 1] = '\0';  just sayin' */
+    
 }
 
 int isValidEntry(struct player* p, char buffer[])
@@ -245,26 +287,30 @@ int isValidEntry(struct player* p, char buffer[])
     return -1;
 }
 
-void printInformation(struct player* p1, struct player* p2, struct card* c, char wild_card_suit)
+void printInformation(struct player* user, struct player* cpu, struct card* show_card, char play_card_suit)
 {
-    /*
     printf("WINNING SCORE: %d\n", WINNING_SCORE);
-    printf("PLAYER: %6d\n", p1->score);
-    printf("CPU: %6d\n\n", p2->score);
+    printf("PLAYER: %6d\n", user->score);
+    printf("CPU: %6d\n\n", cpu->score);
     printf("SHOW CARD: ");
-    */
-
     /* display show card */
-    printShowCard(c, wild_card_suit);
+    printShowCard(show_card, play_card_suit);
 
     /* print cpu's hand --- DEBUG ONLY */
-    printf("CPU's hand has %d cards:\n", p2->hand_size);
-    printHand(p2);
+    printf("CPU's hand has %d card", cpu->hand_size);
+    if(cpu->hand_size == 1)
+        printf(".\n");
+    else
+        printf("s.\n");
+    printHand(cpu);
     
-    printf("Player's hand has %d cards (%d valid plays):\n", p1->hand_size, getValidPlays(p1, c, wild_card_suit));
-    printHand(p1);
+    printf("Player's hand has %d cards (%d valid play", user->hand_size, getValidPlays(user, show_card, play_card_suit));
+    if(getValidPlays(user, show_card, play_card_suit) == 1)
+        printf(").\n");
+    else
+        printf("s).\n");    
+    printHand(user);
     printf("\n");
-
 }
 
 /*print show card */
@@ -319,7 +365,7 @@ void printCard(struct card* c)
             printf(" K");
             break;
         default:
-            printf(" %c", c->value + '0');
+            printf(" %c", (c->value + '0'));
             break;
     }
     printf("%c", c->suit);
