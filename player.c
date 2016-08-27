@@ -91,7 +91,6 @@ struct card* AIPlayCard(struct player*p, struct card* c, char* play_card_suit)
 	index = hasWildCard(p); /* does the CPU have any eights? */
 	if(index > -1)
 	{
-        printf("CPU has wild card to play!]\n");
 		/* we will play the 8 but we need to choose a suit */
 		max = h_sum = s_sum = d_sum = c_sum = 0;
 		for(i = 0; i < p->hand_size; ++i)
@@ -131,7 +130,6 @@ struct card* AIPlayCard(struct player*p, struct card* c, char* play_card_suit)
     else
     {
         max = 0;
-        printf("CPU has no wild card to play!]\n");
 	    /* if no 8 (aka wild card), play best card */
 	    for(i = 0; i < p->hand_size; ++i)
         {
@@ -146,7 +144,6 @@ struct card* AIPlayCard(struct player*p, struct card* c, char* play_card_suit)
         }
         if(index < 0)
         {
-            printf("CPU had no same suit.\n");
 	        /* if no 8 (aka wild card), play best card */
             i = 0;
 	        while(index < 0 && i < p->hand_size)
@@ -156,8 +153,6 @@ struct card* AIPlayCard(struct player*p, struct card* c, char* play_card_suit)
                 ++i;
             }    
         }    
-
-        printf("CPU index chosen: %d.\n", index);
 
 	    *play_card_suit = p->hand[index]->suit;
 	    out = p->hand[index];

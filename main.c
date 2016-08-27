@@ -14,6 +14,10 @@
 #define QD              13
 #define LIMIT           4
 
+#define ESCN  "\x1B[0m"
+#define ESCR  "\x1B[31m"
+#define ESCB  "\x1B[34m"
+
 /* function declaration */
 void getLine(char buffer[]);
 int isValidEntry(struct player* p, char buffer[]);
@@ -100,10 +104,10 @@ int main(int argc, char* argv[])
                     if(current_player == cpu)
                         printf("CPU must draw a card, press ENTER to continue.");
                     else
-                        printf("Press enter to draw a card.\n");
+                        printf("Press enter to draw a card.");
                     getchar();
                     addCardToPlayerHand(current_player, drawCardFromDeck(game_deck));
-                    printHand(current_player);
+                    printInformation(user, cpu, show_card, play_card_suit);
                 }
             } while(valid_plays == 0);
 
@@ -129,16 +133,18 @@ int main(int argc, char* argv[])
             else
             {
                 /* CPU use limited AI to select best play */
-                /* NEEDS TO BE WRITTEN */
-                printf("AI check.\n");
+                printf("CPU has chosen to play... ");
                 show_card = AIPlayCard(current_player, show_card, &play_card_suit);
+                printCard(show_card);
+                printf(".\nPress ENTER to continue. ");
+                getchar();
             }
             returnCardToDeck(game_deck, show_card); /* return old show card to deck */
             /* check for no more cards in current player's hand */
             if((current_player->hand_size) == 0)
             {
                 in_session = 0; /* this game is over */
-                printf("The game has ended.");
+                printf("The game has ended.\n");
                 
                 if(current_player == cpu)
                 {
@@ -165,6 +171,9 @@ int main(int argc, char* argv[])
                 }
                 else
                 {
+                    printf("Press enter to continue playing. ");
+                    getchar();
+
                     /* reset game */
                     /* reset players */
                     resetPlayer(user);
@@ -289,12 +298,14 @@ int isValidEntry(struct player* p, char buffer[])
 
 void printInformation(struct player* user, struct player* cpu, struct card* show_card, char play_card_suit)
 {
-    printf("WINNING SCORE: %d\n", WINNING_SCORE);
-    printf("PLAYER: %6d\n", user->score);
+    system("clear");
+    printf("WINNING SCORE:        %6d\n", WINNING_SCORE);
+    printf("PLAYER: %6d   ", user->score);
     printf("CPU: %6d\n\n", cpu->score);
-    printf("SHOW CARD: ");
+
     /* display show card */
     printShowCard(show_card, play_card_suit);
+    printf("\n");
 
     /* print cpu's hand --- DEBUG ONLY */
     printf("CPU's hand has %d card", cpu->hand_size);
@@ -319,7 +330,16 @@ void printShowCard(struct card* c, char wild_card_suit)
     printf("PLAY >>> ");
     printCard(c);
     if(wild_card_suit != c->suit)
-        printf(" --- SPECIAL SUIT: %c\n", wild_card_suit);
+    {
+        printf(" --- SPECIAL SUIT: ");
+        if(wild_card_suit == 'H' || wild_card_suit == 'D')
+            printf(ESCR);
+        else
+            printf(ESCB);   
+        printf("%c", wild_card_suit);
+        printf(ESCN);
+        printf("\n");
+    }
     else
         printf("\n");
 }
@@ -332,11 +352,11 @@ void printHand(struct player* p)
     /* print players hand*/
     for(i = 0; i < p->hand_size; ++i)
     {
-        /*
-        if(p->id == 0)*/
+        if(p->id == 0)
             printCard(p->hand[i]);
-        /* else
-            printf("###");*/
+        else
+            printf("###");
+        
         if(i < p->hand_size - 1)
             printf(" ");
         else
@@ -368,7 +388,12 @@ void printCard(struct card* c)
             printf(" %c", (c->value + '0'));
             break;
     }
+    if(c->suit == 'H' || c->suit == 'D')
+        printf(ESCR);
+    else
+        printf(ESCB);
     printf("%c", c->suit);
+    printf(ESCN);
 }
 
 char getWildCardSuit()
@@ -376,7 +401,11 @@ char getWildCardSuit()
     char c;
     do
     {
-        printf("Enter wildcard suit (H, S, D, or C): ");
+        printf("Enter wildcard suit (");
+        printf(ESCR "H" ESCN ", ");
+        printf(ESCB "S" ESCN ", ");
+        printf(ESCR "D" ESCN ", or ");
+        printf(ESCB "C" ESCN "): ");
         c = getchar();
         getchar(); /* enter */
     }
