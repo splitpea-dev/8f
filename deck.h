@@ -5,15 +5,7 @@
 #include <stdlib.h>
 #include "card.h"
 
-
-#define DECK_SIZE       52
-#define QD              13
-
 /* deck data structure */
-
-
-
-
 struct deck
 {
     struct card* master_deck[DECK_SIZE];

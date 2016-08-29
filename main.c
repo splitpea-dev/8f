@@ -1,40 +1,45 @@
-/* EIGHT FREAK */
-/* by Brian Puthuff */
+/*  
+    8F
+    by Brian Puthuff
+    
+    8F is a simple player vs CPU game of
+    Crazy Eights that can be played on the
+    terminal.
+
+    Last updated: Sun Aug 28 23:39:16 PDT 2016
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <time.h>
 
 #include "card.h"
 #include "deck.h"
 #include "player.h"
 
-#define WINNING_SCORE   100
-#define DECK_SIZE       52
-#define QD              13
-#define LIMIT           4
-
+/* terminal color defines */
 #define ESCN  "\x1B[0m"
-#define ESCR  "\x1B[31m"
-#define ESCB  "\x1B[34m"
+#define ESCR  "\x1B[31;1m"
+#define ESCB  "\x1B[34;1m"
 
-/* function declaration */
+/* function declarations */
 void getLine(char buffer[]);
 int isValidEntry(struct player* p, char buffer[]);
 void printInformation(struct player* user, struct player* cpu, struct card* show_card, char play_card_suit);
-void printShowCard(struct card* c, char wild_card_suit);
+void printShowCard(struct card* show_card, char play_card_suit);
 void printHand(struct player* p);
 void printCard(struct card* c);
 char getWildCardSuit(void);
 
 int main(int argc, char* argv[])
 {
-    /* set up everything */
+    /* SET-UP EVERYTHING */
 
     /* main structures */
     struct player* user;
     struct player* cpu;
-    struct player* current_player;
+    struct player* current_player; /* just a pointer to user or cpu */
     struct deck* game_deck;
     struct card* show_card;
 
@@ -61,10 +66,15 @@ int main(int argc, char* argv[])
     /* program loop */
     while(is_playing)
     {
-        /* reset game */
+        /* RESET GAME */
+
         /* reset players */
         resetPlayer(user);
         resetPlayer(cpu);
+
+        /* reset scores */
+        resetPlayerScore(user);
+        resetPlayerScore(cpu);
 
         /* setup deck */
         resetDeck(game_deck);
@@ -122,17 +132,17 @@ int main(int argc, char* argv[])
                     index = isValidEntry(current_player, input_buffer);
                 }
                 while(index < 0);
-                /* once a card index is selected, we need to make that the new show card */
 
+                /* once a card index is selected, we need to make that the new show card */
                 show_card = playCard(current_player, index); /* played card becomes new show_card */
                 if(show_card->value == 8)
-                    play_card_suit = getWildCardSuit();
+                    play_card_suit = getWildCardSuit(); /* prompt user for suit */
                 else
                     play_card_suit = show_card->suit;            
             }
             else
             {
-                /* CPU use limited AI to select best play */
+                /* CPU selects best play */
                 printf("CPU has chosen to play... ");
                 show_card = AIPlayCard(current_player, show_card, &play_card_suit);
                 printCard(show_card);
@@ -140,10 +150,14 @@ int main(int argc, char* argv[])
                 getchar();
             }
             returnCardToDeck(game_deck, show_card); /* return old show card to deck */
+            
             /* check for no more cards in current player's hand */
             if((current_player->hand_size) == 0)
             {
                 in_session = 0; /* this game is over */
+                current_player->score+=score;
+                printInformation(user, cpu, show_card, play_card_suit);
+                
                 printf("The game has ended.\n");
                 
                 if(current_player == cpu)
@@ -159,12 +173,13 @@ int main(int argc, char* argv[])
                 /* if player's score is WINNING SCORE, game over */
                 is_playing = 0;
                 
-                current_player->score+=score;
+
                 if(current_player->score >= WINNING_SCORE)
                 {
                     /* NEEDS TO BE WRITTEN */
                     /* game over for winner */
                     /* play again */
+                    printf("New game (Y/N)? ");
                     c = getchar();
                     if(c == 'N' || c =='n')
                         is_playing = 0;
@@ -174,8 +189,9 @@ int main(int argc, char* argv[])
                     printf("Press enter to continue playing. ");
                     getchar();
 
-                    /* reset game */
-                    /* reset players */
+                    /* RESET GAME */
+
+                    /* reset players but not score */
                     resetPlayer(user);
                     resetPlayer(cpu);
 
@@ -191,12 +207,12 @@ int main(int argc, char* argv[])
                         addCardToPlayerHand(cpu, drawCardFromDeck(game_deck));
                     }
 
-        /* get current play card */
-        show_card = drawCardFromDeck(game_deck);
+                    /* get current play card */
+                    show_card = drawCardFromDeck(game_deck);
 
-        /* and finally */
-        current_player = user;
-        play_card_suit = show_card->suit;
+                    /* and finally */
+                    current_player = user;
+                    play_card_suit = show_card->suit;
                     is_playing = 1; /* overall game running bool */
                     in_session = 1; /* current game loop bool */
                 }
@@ -218,31 +234,20 @@ int main(int argc, char* argv[])
     destroyPlayer(cpu);
     destroyDeck(game_deck);
 
-    printf("Exit.");
+    printf("Thanks for playing! =)\n\n");
     return 0;
 }
 
+
 void getLine(char buffer[])
 {
-    /*
     int i;
-    char c;
-
-    i = 0;
-    */
-
-    fgets(buffer, 5, stdin);
-    /*
-    do
-    {
-        c = getchar();
-        if(c != '\n')
-            buffer[i] = c;
-        ++i;
-    } while((c != '\n') && (i < LIMIT - 1));
-    buffer[LIMIT - 1] = '\0';  just sayin' */
     
+    fgets(buffer, 5, stdin);
+    for(i = 0; i < 5; ++i)
+        buffer[i] = toupper(buffer[i]);
 }
+
 
 int isValidEntry(struct player* p, char buffer[])
 {
@@ -252,52 +257,49 @@ int isValidEntry(struct player* p, char buffer[])
     /* value evaluation */
     if(buffer[0] == '1')
     {
+        /* see if 10 was entered */
         if(buffer[1] == '0')
                 value = 10;
     }
-    else if((buffer[0] == 'J') || (buffer[0] == 'j'))
+    else if(buffer[0] == 'J')
         value = 11;
-    else if((buffer[0] == 'Q') || (buffer[0] == 'q'))
+    else if(buffer[0] == 'Q')
         value = 12;
-    else if((buffer[0] == 'K') || (buffer[0] == 'k'))
+    else if(buffer[0] == 'K')
         value = 13;
-    else if((buffer[0] == 'A') || (buffer[0] == 'a'))
+    else if(buffer[0] == 'A')
         value = 1;
     else if((buffer[0] >= '2') && (buffer[0] <= '9'))
         value = buffer[0] - '0';   
     else
         return -1; /* failed on value entry */
 
+    /* if first two chars were 1 and 0 then suit should be at buffer[2] otherwise buffer[1] */
     if(value == 10)
         i = 2;
     else
         i = 1;
         
-    if(buffer[i] == 'H' || buffer[i] == 'h')
-        suit = 'H';
-    else if(buffer[i] == 'S' || buffer[i] == 's')
-        suit = 'S';
-    else if(buffer[i] == 'D' || buffer[i] == 'd')
-        suit = 'D';
-    else if(buffer[i] == 'C' || buffer[i] == 'c')
-        suit = 'C';
+    /* check for valid suit */
+    if(buffer[i] != 'H' && buffer[i] != 'S' && buffer[i] != 'D' && buffer[i] != 'C')
+        return -1;  /* failed on suit entry */
     else
-        return -1;
+        suit = buffer[i];
 
+    /* finally, ensure card entry is actually in the hand */
     for(i = 0; i < p->hand_size; ++i)
     {
         if((p->hand[i]->value == value) && (p->hand[i]->suit == suit))
-        {
-            printf("value is a match! (%d)\n", i);
             return i;
-        }
     }
 
-    return -1;
+    return -1; /* if a valid index wasn't returned, something failed. */
 }
+
 
 void printInformation(struct player* user, struct player* cpu, struct card* show_card, char play_card_suit)
 {
+    /* clear screen and display scores */
     system("clear");
     printf("WINNING SCORE:        %6d\n", WINNING_SCORE);
     printf("PLAYER: %6d   ", user->score);
@@ -307,14 +309,15 @@ void printInformation(struct player* user, struct player* cpu, struct card* show
     printShowCard(show_card, play_card_suit);
     printf("\n");
 
-    /* print cpu's hand --- DEBUG ONLY */
+    /* display number of cards cpu has */
     printf("CPU's hand has %d card", cpu->hand_size);
     if(cpu->hand_size == 1)
         printf(".\n");
     else
         printf("s.\n");
     printHand(cpu);
-    
+
+    /* display player card/hand info */
     printf("Player's hand has %d cards (%d valid play", user->hand_size, getValidPlays(user, show_card, play_card_suit));
     if(getValidPlays(user, show_card, play_card_suit) == 1)
         printf(").\n");
@@ -324,19 +327,19 @@ void printInformation(struct player* user, struct player* cpu, struct card* show
     printf("\n");
 }
 
-/*print show card */
-void printShowCard(struct card* c, char wild_card_suit)
+
+void printShowCard(struct card* show_card, char play_card_suit)
 {
     printf("PLAY >>> ");
-    printCard(c);
-    if(wild_card_suit != c->suit)
+    printCard(show_card);
+    if(play_card_suit != show_card->suit)
     {
         printf(" --- SPECIAL SUIT: ");
-        if(wild_card_suit == 'H' || wild_card_suit == 'D')
+        if(play_card_suit == 'H' || play_card_suit == 'D')
             printf(ESCR);
         else
             printf(ESCB);   
-        printf("%c", wild_card_suit);
+        printf("%c", play_card_suit);
         printf(ESCN);
         printf("\n");
     }
@@ -344,7 +347,7 @@ void printShowCard(struct card* c, char wild_card_suit)
         printf("\n");
 }
 
-/*print player's hand */
+
 void printHand(struct player* p)
 {
     int i;
@@ -352,6 +355,7 @@ void printHand(struct player* p)
     /* print players hand*/
     for(i = 0; i < p->hand_size; ++i)
     {
+        /* if CPU, just show card backs '###' */
         if(p->id == 0)
             printCard(p->hand[i]);
         else
@@ -364,7 +368,7 @@ void printHand(struct player* p)
     }
 }
 
-/* print a card's value based on its structure data */
+
 void printCard(struct card* c)
 {
     switch(c->value)
@@ -396,6 +400,7 @@ void printCard(struct card* c)
     printf(ESCN);
 }
 
+
 char getWildCardSuit()
 {
     char c;
@@ -407,9 +412,9 @@ char getWildCardSuit()
         printf(ESCR "D" ESCN ", or ");
         printf(ESCB "C" ESCN "): ");
         c = getchar();
+        c = toupper(c);
         getchar(); /* enter */
     }
-    while((c != 'H' && c != 'h') && (c != 'S' && c != 's') && (c != 'D' && c != 'd') && (c != 'C' && c != 'c'));
-
+    while((c != 'H') && (c != 'S') && (c != 'D') && (c != 'C'));
     return c;
 }

@@ -5,8 +5,6 @@
 #include <stdlib.h>
 #include "card.h"
 
-#define DECK_SIZE       52
-
 /* player data structure */
 struct player
 {
