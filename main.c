@@ -155,25 +155,21 @@ int main(int argc, char* argv[])
             if((current_player->hand_size) == 0)
             {
                 in_session = 0; /* this game is over */
-                current_player->score+=score;
-                printInformation(user, cpu, show_card, play_card_suit);
-                
-                printf("The game has ended.\n");
-                
                 if(current_player == cpu)
-                {
                     score = getPlayerHandSum(user);
-                    printf("CPU wins with %d points.\n", score);
-                }
                 else
-                {
-                    score = getPlayerHandSum(cpu);
-                    printf("Player wins with %d points.\n", score);
-                }
-                /* if player's score is WINNING SCORE, game over */
-                is_playing = 0;
-                
+                    score = getPlayerHandSum(cpu);  
 
+                current_player->score+=score;
+
+                printInformation(user, cpu, show_card, play_card_suit);
+                printf("The game has ended.\n");
+                if(current_player == cpu)
+                    printf("CPU wins with %d points.\n", score);
+                else
+                    printf("Player wins with %d points.\n", score);
+
+                /* if player's score is WINNING SCORE, game over */
                 if(current_player->score >= WINNING_SCORE)
                 {
                     /* NEEDS TO BE WRITTEN */
