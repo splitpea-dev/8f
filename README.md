@@ -14,7 +14,7 @@ The goal is set to 100 points. The player plays against the CPU until either has
 
 When the game begins, each player is given a hand of 8 cards from a shuffled deck. A show card is presented and the human player must play off that card or draw from the deck until he is able to. During each turn, the game shows the valid number of cards that may be played in the user's hand.
 
-![Draw a card.](../screenshots/ss_3.png)
+![Draw a card.](./screenshots/ss_3.png)
 
 The rules are simple. Each player must play a card from thier hand that either has the same value or the same suit. Suits can be changed by playing the same value from a different suit. A card with a value of 8 is a wild card and can be played regardless of the show card value and suit. When the 8 card is played, the player can choose a different suit than what is indicated on that card.
 
