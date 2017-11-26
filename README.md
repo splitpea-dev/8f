@@ -24,5 +24,3 @@ The first player to play out his entire hand wins, and his score is accumulated 
 
 ![Victory!](./screenshots/ss_4.png)
 
-## Colophon
-This game was programmed in C using Visual Studio Code for Linux.
